@@ -1,0 +1,40 @@
+.Ad {
+    background-color: #66cccc;
+    box-sizing: border-box;
+    height: 200px;
+    width:1600px;
+    margin:5px auto;
+}
+
+.Ad>div {
+    background-color: #cccc00;
+    float:left;
+    width:510px;
+    margin: 10px 10px;
+    height: 180;
+    padding:10px;
+    box-sizing: border-box;
+}
+
+.Ad>div img {
+    margin-top:5px;
+    margin-left:12px;
+}
+
+form {
+    text-align: central;
+    background-color: #cccccc;
+    height: 50px;
+    margin:5px auto;
+    width: 1000px;
+}
+
+form>select, form>input{
+    height: 30px;
+    margin-left:20px;
+}
+
+form>input[type="radio"] {
+    vertical-align: bottom;
+    margin-top:10px;
+}
