@@ -1,13 +1,13 @@
 {
     "name": "ellinordex/elldex",
-	"description": "Parse Avito",
-	"license": "proprietary",
+    "description": "Parse Avito",
+    "license": "proprietary",
     "require": {
         "electrolinux/phpquery": "dev-master",
 	"ellinordex/elldex": "dev-master"
     },
-	"autoload": {
-		"classmap": ["src"]
-	},
+    "autoload": {
+	"classmap": ["src"]
+    },
     "minimum-stability": "dev"
 }
