@@ -101,43 +101,6 @@ class AvitoParser {
 		print $resText;
 	}
 
-	//Парсинг страницы сайта
-	function  page_parsing($__html, $__base, $__req) {
-		$avito_page = get_html_from_avito($__html);
-		do {
-			$pqdoc_page = phpQuery::newDocument($avito_page[0]);
-			$ads = $pqdoc_page->find('.js-catalog-item-enum');
-			
-			foreach($ads as $ad) {
-				$pq_ad = pq($ad);
-				$link = ($pq_ad->find('.item-description-title-link')->attr('href')!='')?trim($pq_ad->find('.item-description-title-link')->attr('href'))
-						:trim($pq_ad->find('.description-title-link')->attr('href'));
-				$name = ($pq_ad->find('.item-description-title-link>span')->text()!='') ? trim($pq_ad->find('.item-description-title-link>span')->text())
-						:trim($pq_ad->find('.description-title-link>span')->text());
-				$price = trim($pq_ad->find('.price')->attr('content'));
-				$description = ($pq_ad->find('.specific-params_block')->text()!='')?trim($pq_ad->find('.specific-params_block')->text())
-						:  str_replace("\n"," ",trim($pq_ad->find('span.option')->text()));
-				$time_send = trim($pq_ad->find('.js-item-date')->attr('data-absolute-date'));
-				$link_to_pic = 'https:'.trim($pq_ad->find('.large-picture-img')[0]->attr('src'));
-				$time_req = strftime('%d %B %Y %X');
-				$req = $__req;
-				$avito_ad = get_html_from_avito( 'https://m.avito.ru'.$link );
-				$link ='https://www.avito.ru'.$link;
-				$pqdoc_ad = phpQuery::newDocument($avito_ad[0]);
-				$phone = $pqdoc_ad->find('a[class="BPWk2"]')->attr('href');
-				$address = $pqdoc_ad->find('span[data-marker="delivery/location"]')->text();
-				$query = "INSERT INTO AvitoTable (Link,Name,Address,Price,Descr,LinkToPic,Phone,CTime,RTime,Request) VALUES ('$link','$name','$address','$price','$description','$link_to_pic','$phone','$time_send','$time_req','$req')
-					  ON DUPLICATE KEY UPDATE Name='$name',Address='$address',Price='$price',Descr='$description',LinkToPic='$link_to_pic',Phone='$phone',CTime='$time_send',RTime='$time_req',Request='$req';";
-				mysqli_query($__base, $query);
-			}
-				
-				
-			$buf = 'https://www.avito.ru'.$pqdoc_page->find('.js-pagination-next')->attr('href');
-			$avito_page = get_html_from_avito($buf);
-			
-		}while($buf!='https://www.avito.ru');
-	}
-
 	//Функция получения кода страницы
 	function get_html_from_avito($__url) {
 		$ch = curl_init( $__url );
