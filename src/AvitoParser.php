@@ -77,7 +77,7 @@ class AvitoParser {
 			$adress = 'https://www.avito.ru'.$_SESSION['category'];
 			unset($_SESSION['category']);
 			$adress .= '?q='.$_SESSION['req'];
-			page_parsing($adress,$base,strtolower($_SESSION['req']));
+			$this->page_parsing($adress,$base,strtolower($_SESSION['req']));
 			mysqli_close($link);
 			unset($_SESSION['req']);
 			header('Location: ./');
