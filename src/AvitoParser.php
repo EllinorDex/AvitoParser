@@ -3,8 +3,9 @@ require_once 'vendor/autoload.php';
 
 
 class AvitoParser {
-	function  page_parsing($__html, $__base, $__req) {
-		$avito_page = get_html_from_avito($__html);
+	function  page_parsing($__html, $__base, $__req, $__count=1000) {
+		$avito_page = $this->get_html_from_avito($__html);
+		$i = 0;
 		do {
 			$pqdoc_page = phpQuery::newDocument($avito_page[0]);
 			$ads = $pqdoc_page->find('.js-catalog-item-enum');
@@ -22,7 +23,7 @@ class AvitoParser {
 				$link_to_pic = 'https:'.trim($pq_ad->find('.large-picture-img')[0]->attr('src'));
 				$time_req = strftime('%d %B %Y %X');
 				$req = $__req;
-				$avito_ad = get_html_from_avito( 'https://m.avito.ru'.$link );
+				$avito_ad = $this->get_html_from_avito( 'https://m.avito.ru'.$link );
 				$link ='https://www.avito.ru'.$link;
 				$pqdoc_ad = phpQuery::newDocument($avito_ad[0]);
 				$phone = $pqdoc_ad->find('a[class="BPWk2"]')->attr('href');
@@ -30,19 +31,24 @@ class AvitoParser {
 				$query = "INSERT INTO AvitoTable (Link,Name,Address,Price,Descr,LinkToPic,Phone,CTime,RTime,Request) VALUES ('$link','$name','$address','$price','$description','$link_to_pic','$phone','$time_send','$time_req','$req')
 					  ON DUPLICATE KEY UPDATE Name='$name',Address='$address',Price='$price',Descr='$description',LinkToPic='$link_to_pic',Phone='$phone',CTime='$time_send',RTime='$time_req',Request='$req';";
 				mysqli_query($__base, $query);
+				++$i;
+				if($i==$__count) return;
 			}
 				
 				
 			$buf = 'https://www.avito.ru'.$pqdoc_page->find('.js-pagination-next')->attr('href');
-			$avito_page = get_html_from_avito($buf);
+			$avito_page = $this->get_html_from_avito($buf);
 			
 		}while($buf!='https://www.avito.ru');
 	}
 	
-	function parse_avito() {
-		$base = mysqli_connect("localhost", "root", '', "avitoparsing");
-		$base->set_charset("utf8");
+	function parse_avito($_iniArray, $__countAd) {
+		$base = mysqli_connect($_iniArray["host"], $_iniArray["user"], $_iniArray["password"], $_iniArray["database"]);
+		mysqli_set_charset($base,"utf8");
 		ini_set('max_execution_time', 900);
+		mysqli_query($base, "SET NAMES 'utf8'"); 
+		mysqli_query($base, "SET CHARACTER SET 'utf8'");
+		mysqli_query($base, "SET SESSION collation_connection = 'utf8_general_ci'");
 		$resText =  '<link rel="stylesheet" type="text/css" href="style.css"><form method="post">
 			<select id="category" name="category_id">
 			<option value="" selected="selected">Любая категория</option>       <option value="/moskva/transport">Транспорт</option>
@@ -52,7 +58,7 @@ class AvitoParser {
 			<option value="/moskva/hobbi_i_otdyh">Хобби и отдых</option>        <option value="/moskva/zhivotnye">Животные</option>
 			<option value="/moskva/dlya_biznesa">Для бизнеса</option>
 			</select>
-			<input id="obj" name="req" type="text" required="required">
+			<input id="obj" name="req" type="text" required="required" placeholder="Введите запрос">
 			<input name="offlain" type="radio" >Вывести базу
 			<input type="submit" name="butt" value="Парсить">
 			</form>';
@@ -77,7 +83,8 @@ class AvitoParser {
 			$adress = 'https://www.avito.ru'.$_SESSION['category'];
 			unset($_SESSION['category']);
 			$adress .= '?q='.$_SESSION['req'];
-			$this->page_parsing($adress,$base,strtolower($_SESSION['req']));
+			$req = substr($adress, strripos($adress , '=') + 1);
+			$this->page_parsing($adress,$base,strtolower($req),$__countAd);
 			mysqli_close($link);
 			unset($_SESSION['req']);
 			header('Location: ./');
@@ -85,10 +92,12 @@ class AvitoParser {
 		}
 
 		//При оффлайн просмотре базы
-		if(isset($_SESSION['radio']) && $_SESSION['radio']!='') {
+		if(isset($_SESSION['radio']) && $_SESSION['radio'] != '') {
 			$query = "SELECT * FROM AvitoTable WHERE '".strtolower($_SESSION['req'])."' = Request;";
 			$rows = mysqli_query($base, $query);
 			if($rows) {
+				$buf = mysqli_fetch_row($rows);
+				$resText.= "<h1>Время последнего обновления базы по запросу: $buf[8]</h1>";
 				while ( $row = mysqli_fetch_row($rows)) {
 					$resText.= '<div class="Ad"><div><img src="'.$row[5].'"></div>
 							<div><h3>'.$row[1].'</h3><h3>Стоимость: '.$row[3].'</h3>'.$row[6].'<br>'.$row[2].'</div>
